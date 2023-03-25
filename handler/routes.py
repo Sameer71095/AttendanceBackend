@@ -59,9 +59,9 @@ async def recognize(request):
 
 async def connect_db():
     return await aiomysql.create_pool(
-        host='mysql.fuzixtech.com',
+        host='127.0.0.1',
         port=3306,
-        user='adminsameer',
+        user='root',
         password='m.sameer',
         db='db_attendancesystem',
         autocommit=True,
@@ -77,7 +77,7 @@ async def close_db(app, loop):
     services.ctx.config.db.close()
     await services.ctx.config.db.wait_closed()
 
-engine = create_engine('mysql+pymysql://adminsameer:m.sameer@mysql.fuzixtech.com:3306/db_attendancesystem')
+engine = create_engine('mysql+pymysql://root:m.sameer@127.0.0.1:3306/db_attendancesystem')
 employer_service = EmployerService(engine)
 
 Session = sessionmaker(bind=engine)
