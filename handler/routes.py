@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime
 
 import aiomysql
-from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Prediction, Helper, User,EmployerService
+from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Prediction, Helper, User,EmployerService, make_json_serializable
 
 from handler.models import  Department, Employee, Employer, Location, SalaryType, UserType, Attendance
 from sqlalchemy.orm import sessionmaker
@@ -116,7 +116,6 @@ async def create_employer(request):
     employer = employer_service.create_employer(employer_data)
     return json({'employer': employer})
     
-    
 @services.post('/api/employee/login', strict_slashes=True)
 async def loginemployee(request):
     email = request.json.get('email')
@@ -124,15 +123,15 @@ async def loginemployee(request):
     # Validate the request parameters
     if not email or not password:
         return response.json({'message': 'Missing email or password'}, status=400)
-    employee= EmployeeClass()
+    employee = EmployeeClass()
     async with services.ctx.config.db.acquire() as conn:
-        employeedata = await employee.login_employee(conn,email,password)
+        employeedata = await employee.login_employee(conn, email, password)
         if not employeedata:
-            return response.json({'isSuccess': False,'errorMessage': 'Invalid credentials'}, status=401)
+            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=401)
         else:
-            return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-   
-   
+            employeedata_serializable = make_json_serializable(employeedata)
+            return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata_serializable})
+
    
    
 @services.post("/api/attendance/checkin", strict_slashes=True)

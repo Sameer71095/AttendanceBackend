@@ -11,6 +11,8 @@ from handler.models import Employer
 from sqlalchemy.orm import sessionmaker
 
 from datetime import date, datetime, timedelta
+from collections import namedtuple
+
 
 class Prediction:
     def __init__(self, train_model, distance_threshold):
@@ -93,7 +95,7 @@ class Helper:
         ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     
-    
+
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, timedelta):
@@ -110,6 +112,58 @@ class CustomJSONEncoder(json.JSONEncoder):
             else:
                 return obj  # If the length is not 1, return the bytes object unchanged
         return super(CustomJSONEncoder, self).default(obj)
+
+    def encode(self, obj):
+        def hint_tuples(item):
+            if isinstance(item, tuple) and hasattr(item, '_asdict'):
+                return {'__tuple__': True, 'items': item._asdict()}
+            if isinstance(item, list) or isinstance(item, set):
+                return [hint_tuples(e) for e in item]
+            if isinstance(item, dict):
+                new_dict = {}
+                for key, value in item.items():
+                    new_dict[key] = hint_tuples(value)
+                return new_dict
+            return item
+
+        return super(CustomJSONEncoder, self).encode(hint_tuples(obj))
+
+    def decode(self, obj):
+        def hinted_tuples(item):
+            if isinstance(item, dict) and '__tuple__' in item:
+                return namedtuple('Tuple', item['items'].keys())(*item['items'].values())
+            if isinstance(item, list) or isinstance(item, set):
+                return [hinted_tuples(e) for e in item]
+            if isinstance(item, dict):
+                new_dict = {}
+                for key, value in item.items():
+                    new_dict[key] = hinted_tuples(value)
+                return new_dict
+            return item
+
+        return hinted_tuples(super(CustomJSONEncoder, self).decode(obj))
+def make_json_serializable(obj):
+    if isinstance(obj, (list, tuple, set)):
+        return [make_json_serializable(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: make_json_serializable(value) for key, value in obj.items()}
+    elif hasattr(obj, '_asdict'):  # For namedtuples
+        return make_json_serializable(obj._asdict())
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, date):
+        return obj.isoformat()
+    elif isinstance(obj, timedelta):
+        return str(obj)
+    elif isinstance(obj, memoryview):
+        return base64.b64encode(obj.tobytes()).decode('utf-8')
+    elif isinstance(obj, bytes):
+        if len(obj) == 1:
+            return bool(int.from_bytes(obj, byteorder='big'))
+        else:
+            return obj
+    else:
+        return obj
 
 class EmployerService:
     def __init__(self, engine):
@@ -163,18 +217,24 @@ class EmployeeClass:
     async def login_employee(conn, email, password):
         async with conn.cursor() as cur:
             query = """SELECT E.EmployeeID, E.EmployerID, E.Name, E.Email, E.Token, E.PhoneNumber, E.JobTitle, E.DepartmentId, E.ProfileImage, E.DateOfBirth, E.Address, E.Gender, E.WeekendDays, E.WorkdayEndTime, E.IsImagesRegistered,
-                              A.CheckedTime, A.CheckedDate, A.IsCheckedout
-                       FROM Employee AS E
-                       LEFT JOIN Attendance AS A ON E.EmployeeID = A.EmployeeID
-                       WHERE E.IsActive = true AND E.IsDeleted = false AND E.email = %s AND E.password = %s
-                       AND A.AttendanceID IN (SELECT MAX(AttendanceID) FROM Attendance GROUP BY EmployeeID)
-                       """
+                          COALESCE(A.CheckedTime, '') AS CheckedTime,
+                          COALESCE(A.CheckedDate, '') AS CheckedDate,
+                          COALESCE(A.IsCheckedout, '') AS IsCheckedout
+                   FROM Employee AS E
+                   LEFT JOIN Attendance AS A ON E.EmployeeID = A.EmployeeID
+                   WHERE E.IsActive = true AND E.IsDeleted = false AND E.email = %s AND E.password = %s
+                   AND (A.AttendanceID IN (SELECT MAX(AttendanceID) FROM Attendance GROUP BY EmployeeID) OR A.AttendanceID IS NULL)
+                   """
             await cur.execute(query, (email, password))
             result = await cur.fetchone()
             if not result:
                 return None
-            return result
-    
+
+            # Convert the result to a dictionary
+            column_names = [desc[0] for desc in cur.description]
+            result_dict = {key: value for key, value in zip(column_names, result)}
+
+            return result_dict
     
 
 class EmployerClass:
