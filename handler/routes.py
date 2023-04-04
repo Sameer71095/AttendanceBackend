@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime
 
 import aiomysql
-from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Prediction, Helper, User,EmployerService, make_json_serializable
+from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Prediction, Helper, User,EmployerService
 
 from handler.models import  Department, Employee, Employer, Location, SalaryType, UserType, Attendance
 from sqlalchemy.orm import sessionmaker
@@ -57,27 +57,27 @@ async def recognize(request):
 
 
 
-async def connect_db():
-    return await aiomysql.create_pool(
-        host='127.0.0.1',
-        port=3306,
-        user='root',
-        password='m.sameer',
-        db='db_attendancesystem',
-        autocommit=True,
-        cursorclass=aiomysql.DictCursor,
-    )
+# async def connect_db():
+#     return await aiomysql.create_pool(
+#         host='mysql.fuzixtech.com',
+#         port=3306,
+#         user='adminsameer',
+#         password='m.sameer',
+#         db='db_attendancesystem',
+#         autocommit=True,
+#         cursorclass=aiomysql.DictCursor,
+#     )
 
-@services.listener('before_server_start')
-async def setup_db(app, loop):
-    services.ctx.config.db = await connect_db()
+# @services.listener('before_server_start')
+# async def setup_db(app, loop):
+#     services.ctx.config.db = await connect_db()
 
-@services.listener('after_server_stop')
-async def close_db(app, loop):
-    services.ctx.config.db.close()
-    await services.ctx.config.db.wait_closed()
+# @services.listener('after_server_stop')
+# async def close_db(app, loop):
+#     services.ctx.config.db.close()
+#     await services.ctx.config.db.wait_closed()
 
-engine = create_engine('mysql+pymysql://root:m.sameer@127.0.0.1:3306/db_attendancesystem')
+engine = create_engine('mssql+pyodbc://adminsameer:m.sameer@mysql.fuzixtech.com:3306/db_attendancesystem?driver=SQL+Server')
 employer_service = EmployerService(engine)
 
 Session = sessionmaker(bind=engine)
@@ -116,6 +116,7 @@ async def create_employer(request):
     employer = employer_service.create_employer(employer_data)
     return json({'employer': employer})
     
+    
 @services.post('/api/employee/login', strict_slashes=True)
 async def loginemployee(request):
     email = request.json.get('email')
@@ -123,15 +124,15 @@ async def loginemployee(request):
     # Validate the request parameters
     if not email or not password:
         return response.json({'message': 'Missing email or password'}, status=400)
-    employee = EmployeeClass()
+    employee= EmployeeClass()
     async with services.ctx.config.db.acquire() as conn:
-        employeedata = await employee.login_employee(conn, email, password)
+        employeedata = await employee.login_employee(conn,email,password)
         if not employeedata:
-            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=401)
+            return response.json({'isSuccess': False,'errorMessage': 'Invalid credentials'}, status=401)
         else:
-            employeedata_serializable = make_json_serializable(employeedata)
-            return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata_serializable})
-
+            return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+   
+   
    
    
 @services.post("/api/attendance/checkin", strict_slashes=True)
