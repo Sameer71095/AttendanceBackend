@@ -59,6 +59,7 @@ async def hello(request):
 # api that handle recognition image
 @services.post('/api/recognize', strict_slashes=True)
 async def recognize(request):
+ try:
     if 'image' not in request.files:
         return response.json({'status': HTTPStatus.BAD_REQUEST, 'message': 'image is required'})
 
@@ -79,16 +80,17 @@ async def recognize(request):
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
     
-    try:
-        employee = EmployeeClass()
-        with services.ctx.config.db.acquire() as conn:
-            employeedata = employee.recognizeEmployee(conn, results[0][0])
-            if not employeedata:
-                return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=200)
-            else:
-                json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-                return response.text(json_data, content_type='application/json')
-    except Exception as e:
+    
+    employee = EmployeeClass()
+    with services.ctx.config.db.acquire() as conn:
+        employeedata = employee.recognizeEmployee(conn, results[0][0])
+        if not employeedata:
+            return response.json({'isSuccess': False, 'errorMessage': 'Unable to fetch employee'}, status=200)
+        else:
+            json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+            return response.text(json_data, content_type='application/json')
+        
+ except Exception as e:
         return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
         
     #return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
