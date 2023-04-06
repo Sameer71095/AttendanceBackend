@@ -383,6 +383,7 @@ class Employee(Base):
     ManagerID = Column(Integer)
     IsHourlyPaid = Column(Boolean)
     Salary = Column(DECIMAL(10, 2))
+    IsImagesRegistered = Column(Boolean)
     IsActive = Column(Boolean)
     IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
@@ -405,6 +406,7 @@ class Employee(Base):
             'ManagerID': self.ManagerID,
             'IsHourlyPaid': self.IsHourlyPaid,
             'Salary': float(self.Salary) if self.Salary else None,
+            'IsImagesRegistered': self.IsImagesRegistered,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
             'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,

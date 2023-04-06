@@ -338,11 +338,12 @@ async def get_locations(request):
 
 
 # Define the API endpoint
-@services.post('/api/registeremployeeimages', strict_slashes=True)
+@services.post('/api/employee/registerimages', strict_slashes=True)
 async def save_images(request):
     # Get the foldername from the request
     foldername = request.form.get('foldername')
-    foldername='train\\train\\'+foldername
+    foldername = 'train\\train\\' + foldername
+
     # Create the folder if it doesn't exist
     if not os.path.exists(foldername):
         os.makedirs(foldername)
@@ -353,26 +354,16 @@ async def save_images(request):
         with open(os.path.join(foldername, filename), 'wb') as f:
             f.write(file.body)
 
-    db_session = Session()
     employee_id = request.form.get('foldername')
-    try:
-     employee = db_session.query(Employee).filter(Employee.EmployeeID == employee_id).first()
-    except Exception as e:
-        db_session.rollback()
-        message=str(e)
-        return response.json({"status": "failed", "message": str(e)})
 
-    if employee is None:
-        return response.json({"status": "failed", "message": "Employee not found"})
-
-    employee.IsImagesRegistered = True
-
-    try:
-        db_session.commit()
-        return response.json({'status': HTTPStatus.OK,  "message": "Employee Images updated successfully"})
-    except Exception as e:
-        db_session.rollback()
-        return response.json({"status": "failed", "message": "Error updating employee Images"})
+    employee = EmployeeClass()
+    with services.ctx.config.db.acquire() as conn:
+        try:
+            employee.update_employee_images_registered(conn, employee_id, True)
+            return response.json({'status': HTTPStatus.OK, "message": "Employee Images updated successfully"})
+        except Exception as e:
+            conn.rollback()  
+            return response.json({"status": HTTPStatus.OK, "message": f"Error updating employee Images: {str(e)}"})
 
     # Return a success message
   #  return response.json({'status': HTTPStatus.OK, 'data': 'images saved succesfully'})

@@ -216,7 +216,7 @@ class EmployeeClass:
     @staticmethod
     def login_employee(conn, email, password):
         with conn.cursor() as cur:
-            query = """SELECT E.EmployeeID, E.EmployerID, E.Name, E.Email
+            query = """SELECT E.EmployeeID, E.IsImagesRegistered, E.Name, E.Email
                    FROM Employee AS E
                    WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.email = %s AND E.password = %s
                    """
@@ -230,6 +230,13 @@ class EmployeeClass:
             result_dict = {key: value for key, value in zip(column_names, result)}
 
             return result_dict
+    # Add this function to update the IsImagesRegistered field
+    @staticmethod
+    def update_employee_images_registered(conn, employee_id, is_images_registered):
+        with conn.cursor() as cur:
+            query = """UPDATE Employee SET IsImagesRegistered = %s WHERE EmployeeID = %s"""
+            cur.execute(query, (is_images_registered, employee_id))
+            conn.commit()
         
 
 class EmployerClass:
