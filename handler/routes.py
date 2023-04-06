@@ -360,10 +360,10 @@ async def save_images(request):
     with services.ctx.config.db.acquire() as conn:
         try:
             employee.update_employee_images_registered(conn, employee_id, True)
-            return response.json({'status': HTTPStatus.OK, "message": "Employee Images updated successfully"})
+            return response.json({'status': HTTPStatus.OK, "data": "Employee Images updated successfully"})
         except Exception as e:
             conn.rollback()  
-            return response.json({"status": HTTPStatus.OK, "message": f"Error updating employee Images: {str(e)}"})
+            return response.json({"status": HTTPStatus.OK, "data": f"Error updating employee Images: {str(e)}"})
 
     # Return a success message
   #  return response.json({'status': HTTPStatus.OK, 'data': 'images saved succesfully'})
