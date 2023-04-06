@@ -141,7 +141,6 @@ async def create_employer(request):
     return json({'employer': employer})
     
     
-
 @services.post('/api/employee/login', strict_slashes=True)
 async def loginemployee(request):
     email = request.json.get('email')
@@ -153,10 +152,11 @@ async def loginemployee(request):
     with services.ctx.config.db.acquire() as conn:
         employeedata = employee.login_employee(conn, email, password)
         if not employeedata:
-            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=401)
+            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=200)
         else:
-            return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-   
+            json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+            return response.text(json_data, content_type='application/json')
+        
    
 @services.post("/api/attendance/checkin", strict_slashes=True)
 async def attendance_checkin(request):
