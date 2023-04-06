@@ -8,8 +8,8 @@ from sqlalchemy import create_engine
 
 import asyncio
 from datetime import datetime
+from handler.connectionPool import create_pool
 
-import aiomysql
 from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Prediction, Helper, User,EmployerService
 
 from handler.models import  Department, Employee, Employer, Location, SalaryType, UserType, Attendance
@@ -77,7 +77,31 @@ async def recognize(request):
 #     services.ctx.config.db.close()
 #     await services.ctx.config.db.wait_closed()
 
-engine = create_engine('mssql+pyodbc://adminsameer:m.sameer@mysql.fuzixtech.com:3306/db_attendancesystem?driver=SQL+Server')
+
+
+# @services.listener('before_server_start')
+# async def setup_db(app, loop):
+#     app.ctx.db_pool =  create_pool(
+#         server='.',
+#         user='',
+#         password='',
+#         database='db_attendancesystem',
+#         minconn=1,
+#         maxconn=10
+#     )
+@services.listener('before_server_start')
+async def setup_db(app, loop):
+    app.ctx.db_pool =  create_pool(
+        server='192.67.63.238',
+        user='adminsameer',
+        password='m.sameer123',
+        database='db_attendancesystem',
+        minconn=1,
+        maxconn=10
+    )
+    
+    services.ctx.config['db'] = app.ctx.db_pool
+engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@192.67.63.238:1433/db_attendancesystem?driver=SQL+Server')
 employer_service = EmployerService(engine)
 
 Session = sessionmaker(bind=engine)
@@ -117,6 +141,7 @@ async def create_employer(request):
     return json({'employer': employer})
     
     
+
 @services.post('/api/employee/login', strict_slashes=True)
 async def loginemployee(request):
     email = request.json.get('email')
@@ -124,15 +149,13 @@ async def loginemployee(request):
     # Validate the request parameters
     if not email or not password:
         return response.json({'message': 'Missing email or password'}, status=400)
-    employee= EmployeeClass()
-    async with services.ctx.config.db.acquire() as conn:
-        employeedata = await employee.login_employee(conn,email,password)
+    employee = EmployeeClass()
+    with services.ctx.config.db.acquire() as conn:
+        employeedata = employee.login_employee(conn, email, password)
         if not employeedata:
-            return response.json({'isSuccess': False,'errorMessage': 'Invalid credentials'}, status=401)
+            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=401)
         else:
             return response.json({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-   
-   
    
    
 @services.post("/api/attendance/checkin", strict_slashes=True)
@@ -354,3 +377,13 @@ async def save_images(request):
     # Return a success message
   #  return response.json({'status': HTTPStatus.OK, 'data': 'images saved succesfully'})
 
+
+
+@services.get('/api/test', strict_slashes=True)
+async def index(request):
+    conn = request.app.ctx.db_pool.acquire()
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT EmployeeId FROM Employee')
+        rows = cursor.fetchall()
+        request.app.ctx.db_pool.release(conn)
+        return response.json(rows)

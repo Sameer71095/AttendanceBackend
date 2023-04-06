@@ -214,19 +214,14 @@ class EmployeeClass:
         pass
 
     @staticmethod
-    async def login_employee(conn, email, password):
-        async with conn.cursor() as cur:
-            query = """SELECT E.EmployeeID, E.EmployerID, E.Name, E.Email, E.Token, E.PhoneNumber, E.JobTitle, E.DepartmentId, E.ProfileImage, E.DateOfBirth, E.Address, E.Gender, E.WeekendDays, E.WorkdayEndTime, E.IsImagesRegistered,
-                          COALESCE(A.CheckedTime, '') AS CheckedTime,
-                          COALESCE(A.CheckedDate, '') AS CheckedDate,
-                          COALESCE(A.IsCheckedout, '') AS IsCheckedout
+    def login_employee(conn, email, password):
+        with conn.cursor() as cur:
+            query = """SELECT E.EmployeeID, E.EmployerID, E.Name, E.Email
                    FROM Employee AS E
-                   LEFT JOIN Attendance AS A ON E.EmployeeID = A.EmployeeID
-                   WHERE E.IsActive = true AND E.IsDeleted = false AND E.email = %s AND E.password = %s
-                   AND (A.AttendanceID IN (SELECT MAX(AttendanceID) FROM Attendance GROUP BY EmployeeID) OR A.AttendanceID IS NULL)
+                   WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.email = %s AND E.password = %s
                    """
-            await cur.execute(query, (email, password))
-            result = await cur.fetchone()
+            cur.execute(query, (email, password))
+            result = cur.fetchone()
             if not result:
                 return None
 
@@ -235,7 +230,7 @@ class EmployeeClass:
             result_dict = {key: value for key, value in zip(column_names, result)}
 
             return result_dict
-    
+        
 
 class EmployerClass:
     def __init__(self):

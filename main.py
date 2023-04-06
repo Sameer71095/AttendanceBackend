@@ -8,7 +8,7 @@ from sanic import response
 from sanic.exceptions import NotFound
 from sanic_cors import CORS
 from sanic.response import json
-import aiomysql
+from handler.connectionPool import create_pool
 
 from handler.routes import services
 app = Sanic(__name__)
@@ -33,6 +33,7 @@ app.blueprint(services)
 async def print_on_request(request):
     if request.method == 'OPTIONS':
         return response.json(None)
+
 
 
 @app.listener('before_server_start')

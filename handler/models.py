@@ -1,8 +1,7 @@
 # coding: utf-8
-from sqlalchemy import Column, DECIMAL, Date, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Text, Time
-from sqlalchemy.dialects.mysql import BIT
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, LargeBinary, String, Float, DateTime, Date, Time, Text, ForeignKey, Boolean, DECIMAL
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -13,8 +12,8 @@ class Department(Base):
 
     DepartmentID = Column(Integer, primary_key=True)
     DepartmentName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -37,8 +36,8 @@ class HolidayType(Base):
 
     HolidayTypeID = Column(Integer, primary_key=True)
     HolidayTypeName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -62,8 +61,8 @@ class PaymentMethod(Base):
 
     PaymentMethodID = Column(Integer, primary_key=True)
     PaymentMethodName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -88,8 +87,8 @@ class PaymentStatu(Base):
 
     PaymentStatusID = Column(Integer, primary_key=True)
     PaymentStatusName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -113,8 +112,8 @@ class SalaryType(Base):
 
     SalaryTypeID = Column(Integer, primary_key=True)
     SalaryTypeName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -132,29 +131,30 @@ class SalaryType(Base):
             'UpdatedBy': self.UpdatedBy,
         }
 
-
 class SettingType(Base):
     __tablename__ = 'SettingType'
 
     SettingTypeID = Column(Integer, primary_key=True)
-    SettingType = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    SettingType = Column(String(255))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-    
+    RowVersion = Column(Text)
+
     def to_dict(self):
         return {
             'SettingTypeID': self.SettingTypeID,
             'SettingType': self.SettingType,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
 
 
@@ -162,13 +162,14 @@ class SubscriptionType(Base):
     __tablename__ = 'SubscriptionType'
 
     SubscriptionTypeID = Column(Integer, primary_key=True)
-    SubscriptionTypeName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    SubscriptionTypeName = Column(String(255))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
+    RowVersion = Column(Text)
 
     def to_dict(self):
         return {
@@ -176,23 +177,25 @@ class SubscriptionType(Base):
             'SubscriptionTypeName': self.SubscriptionTypeName,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
 
 class UserType(Base):
     __tablename__ = 'UserType'
 
     UserTypeID = Column(Integer, primary_key=True)
-    UserType = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    UserType = Column(String(255))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
+    RowVersion = Column(Text)
 
     def to_dict(self):
         return {
@@ -200,10 +203,11 @@ class UserType(Base):
             'UserType': self.UserType,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
         
 
@@ -211,47 +215,47 @@ class VacationType(Base):
     __tablename__ = 'VacationType'
 
     VacationTypeID = Column(Integer, primary_key=True)
-    VacationTypeName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    VacationTypeName = Column(String(255))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-    
+    RowVersion = Column(Text)
+
     def to_dict(self):
         return {
             'VacationTypeID': self.VacationTypeID,
             'VacationTypeName': self.VacationTypeName,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
-
 
 class User(Base):
     __tablename__ = 'User'
 
     UserID = Column(Integer, primary_key=True)
-    FirstName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    LastName = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    Email = Column(String(255, 'utf8mb4_general_ci'), nullable=False, unique=True)
-    Password = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    PhoneNumber = Column(String(20, 'utf8mb4_general_ci'))
-    UserTypeID = Column(ForeignKey('UserType.UserTypeID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    FirstName = Column(String(255))
+    LastName = Column(String(255))
+    Email = Column(String(255), unique=True)
+    Password = Column(String(255))
+    Token = Column(Text)
+    PhoneNumber = Column(String(20))
+    UserTypeID = Column(Integer)
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-    Token = Column(String(255, 'utf8mb4_general_ci'))
+    RowVersion = Column(Text)
 
-    UserType = relationship('UserType')
-    
     def to_dict(self):
         return {
             'UserID': self.UserID,
@@ -259,16 +263,16 @@ class User(Base):
             'LastName': self.LastName,
             'Email': self.Email,
             'Password': self.Password,
+            'Token': self.Token,
             'PhoneNumber': self.PhoneNumber,
             'UserTypeID': self.UserTypeID,
-            'UserType': self.UserType.to_dict(),
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
-            'Token': self.Token,
+            'RowVersion': self.RowVersion,
         }
 
 
@@ -292,8 +296,8 @@ class Employer(Base):
     CompanySize = Column(Integer)
     TaxID = Column(String(255, 'utf8mb4_general_ci'))
     UserId = Column(ForeignKey('User.UserID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -337,10 +341,10 @@ class AppSetting(Base):
     Description = Column(String(255, 'utf8mb4_general_ci'))
     SettingName = Column(String(255, 'utf8mb4_general_ci'))
     SettingValue = Column(String(255, 'utf8mb4_general_ci'))
-    IsEnabled = Column(BIT(1))
+    IsEnabled = Column(Boolean)
     SettingTypeID = Column(ForeignKey('SettingType.SettingTypeID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -366,73 +370,52 @@ class AppSetting(Base):
             'UpdatedBy': self.UpdatedBy
         }
 
-
 class Employee(Base):
     __tablename__ = 'Employee'
 
     EmployeeID = Column(Integer, primary_key=True)
-    EmployerID = Column(ForeignKey('Employer.EmployerID'), nullable=False, index=True)
-    Name = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    Email = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    Password = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    PhoneNumber = Column(String(20, 'utf8mb4_general_ci'))
-    JobTitle = Column(String(255, 'utf8mb4_general_ci'))
-    DepartmentId = Column(ForeignKey('Department.DepartmentID'), index=True)
-    ProfileImage = Column(LargeBinary)
-    MaxLateTimeinMins = Column(Integer)
-    DateOfBirth = Column(Date)
-    Address = Column(String(255, 'utf8mb4_general_ci'))
-    Gender = Column(String(255, 'utf8mb4_general_ci'))
-    UniqueId = Column(String(255))
-    WeekendDays = Column(String(255))
-    IsLocationBound = Column(BIT(1))
-    WorkdayStartTime = Column(Time)
-    WorkdayEndTime = Column(Time)
-    IsImagesRegistered = Column(BIT(1))
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    FirstName = Column(String(255))
+    LastName = Column(String(255))
+    Email = Column(String(255), unique=True)
+    PhoneNumber = Column(String(20))
+    Address = Column(String(255))
+    DepartmentID = Column(Integer, ForeignKey('Department.DepartmentID'))
+    ManagerID = Column(Integer)
+    IsHourlyPaid = Column(Boolean)
+    Salary = Column(DECIMAL(10, 2))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-    Token = Column(String(255, 'utf8mb4_general_ci'))
-    FCMToken = Column(String(255, 'utf8mb4_general_ci'))
+    RowVersion = Column(Text)
 
-    Department = relationship('Department')
-    Employer = relationship('Employer')
-    
+    department = relationship("Department", back_populates="employees")
 
     def to_dict(self):
         return {
             'EmployeeID': self.EmployeeID,
-            'EmployerID': self.EmployerID,
-            'Name': self.Name,
+            'FirstName': self.FirstName,
+            'LastName': self.LastName,
             'Email': self.Email,
-            'Password': self.Password,
             'PhoneNumber': self.PhoneNumber,
-            'JobTitle': self.JobTitle,
-            'DepartmentId': self.DepartmentId,
-            'ProfileImage': self.ProfileImage,
-            'MaxLateTimeinMins': self.MaxLateTimeinMins,
-            'DateOfBirth': self.DateOfBirth,
             'Address': self.Address,
-            'Gender': self.Gender,            
-            'UniqueId': self.UniqueId,
-            'WeekendDays': self.WeekendDays,
-            'IsLocationBound': self.IsLocationBound,
-            'WorkdayStartTime': self.WorkdayStartTime,
-            'WorkdayEndTime': self.WorkdayEndTime,
-            'IsImagesRegistered': self.IsImagesRegistered,
+            'DepartmentID': self.DepartmentID,
+            'ManagerID': self.ManagerID,
+            'IsHourlyPaid': self.IsHourlyPaid,
+            'Salary': float(self.Salary) if self.Salary else None,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': self.CreatedDate,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': self.UpdatedDate,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
             'UpdatedBy': self.UpdatedBy,
-            'Token': self.Token,
-            'FCMToken': self.FCMToken
+            'RowVersion': self.RowVersion,
         }
-        
+
+
+Department.employees = relationship("Employee", order_by=Employee.EmployeeID, back_populates="department")
 
 
 
@@ -446,8 +429,8 @@ class Location(Base):
     Latitude = Column(Float)
     Longitude = Column(Float)
     Location = Column(String(255, 'utf8mb4_general_ci'))
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -481,8 +464,8 @@ class Memo(Base):
     Title = Column(Text(collation='utf8mb4_general_ci'), nullable=False)
     Body = Column(Text(collation='utf8mb4_general_ci'), nullable=False)
     ReminderDate = Column(Date)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -509,43 +492,41 @@ class Subscription(Base):
     __tablename__ = 'Subscription'
 
     SubscriptionID = Column(Integer, primary_key=True)
-    EmployerID = Column(ForeignKey('Employer.EmployerID'), nullable=False, index=True)
-    SubscriptionTypeId = Column(ForeignKey('SubscriptionType.SubscriptionTypeID'), nullable=False, index=True)
-    StartDate = Column(Date, nullable=False)
-    EndDate = Column(Date, nullable=False)
+    EmployerID = Column(Integer)
+    SubscriptionTypeId = Column(Integer)
+    StartDate = Column(Date)
+    EndDate = Column(Date)
     SubscriptionStatus = Column(Integer)
     RenewalDate = Column(DateTime)
     Amount = Column(DECIMAL(10, 2))
     PaymentDate = Column(Date)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-
-    Employer = relationship('Employer')
-    SubscriptionType = relationship('SubscriptionType')
+    RowVersion = Column(Text)
 
     def to_dict(self):
         return {
             'SubscriptionID': self.SubscriptionID,
-            'EmployerID': self.EmployerID_id,
-            'SubscriptionTypeId': self.SubscriptionTypeId_id,
-            'StartDate': str(self.StartDate),
-            'EndDate': str(self.EndDate),
+            'EmployerID': self.EmployerID,
+            'SubscriptionTypeId': self.SubscriptionTypeId,
+            'StartDate': self.StartDate.isoformat() if self.StartDate else None,
+            'EndDate': self.EndDate.isoformat() if self.EndDate else None,
             'SubscriptionStatus': self.SubscriptionStatus,
-            'RenewalDate': str(self.RenewalDate) if self.RenewalDate else None,
-            'Amount': float(self.Amount),
-            'PaymentDate': str(self.PaymentDate) if self.PaymentDate else None,
+            'RenewalDate': self.RenewalDate.isoformat() if self.RenewalDate else None,
+            'Amount': float(self.Amount) if self.Amount else None,
+            'PaymentDate': self.PaymentDate.isoformat() if self.PaymentDate else None,
             'IsActive': self.IsActive,
             'IsDeleted': self.IsDeleted,
-            'CreatedDate': str(self.CreatedDate),
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
             'CreatedBy': self.CreatedBy,
-            'UpdatedDate': str(self.UpdatedDate),
-            'UpdatedBy': self.UpdatedBy
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
+            'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
-
 
 class Holiday(Base):
     __tablename__ = 'Holiday'
@@ -556,13 +537,13 @@ class Holiday(Base):
     HolidayDate = Column(Date)
     HolidayDay = Column(Integer)
     Year = Column(Integer, nullable=False)
-    IsRecurring = Column(BIT(1), nullable=False)
-    IsSpecialHoliday = Column(BIT(1))
-    IsNotificationRequired = Column(BIT(1))
+    IsRecurring = Column(Boolean, nullable=False)
+    IsSpecialHoliday = Column(Boolean)
+    IsNotificationRequired = Column(Boolean)
     Location = Column(String(255, 'utf8mb4_general_ci'))
     HolidayTypeId = Column(ForeignKey('HolidayType.HolidayTypeID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -604,8 +585,8 @@ class Payment(Base):
     ReferenceNumber = Column(String(255, 'utf8mb4_general_ci'))
     PaymentMethodId = Column(ForeignKey('PaymentMethod.PaymentMethodID'), index=True)
     PaymentStatusId = Column(ForeignKey('PaymentStatus.PaymentStatusID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -642,13 +623,13 @@ class Salary(Base):
     CurrencyType = Column(String(255, 'utf8mb4_general_ci'))
     Amount = Column(DECIMAL(10, 2))
     SalaryTypeId = Column(ForeignKey('SalaryType.SalaryTypeID'), index=True)
-    IsOverTimeAllowed = Column(BIT(1))
+    IsOverTimeAllowed = Column(Boolean)
     PaymentType = Column(Integer)
     EffectiveDate = Column(Date)
     MaxMonthlyOvertime = Column(Integer)
     MaxDailyOvertime = Column(Integer)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
@@ -683,90 +664,92 @@ class Schedule(Base):
     __tablename__ = 'Schedule'
 
     ScheduleID = Column(Integer, primary_key=True)
-    EmployeeID = Column(ForeignKey('Employee.EmployeeID'), nullable=False, index=True)
-    DayOfWeek = Column(String(15, 'utf8mb4_general_ci'))
+    EmployeeID = Column(Integer, ForeignKey('Employee.EmployeeID'))
+    DayOfWeek = Column(String(15))
     CheckInTime = Column(Time)
     CheckOutTime = Column(Time)
     Latitude = Column(Float)
     Longitude = Column(Float)
-    Location = Column(String(255, 'utf8mb4_general_ci'))
-    LocationID = Column(ForeignKey('Location.LocationID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    Location = Column(String(255))
+    LocationID = Column(Integer)
+    IsLocationBasedAttendanceEnabled = Column(Boolean)
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
+    RowVersion = Column(Text)
 
-    Employee = relationship('Employee')
-    Location1 = relationship('Location')
+    employee = relationship("Employee", back_populates="schedules")
 
     def to_dict(self):
         return {
-            'schedule_id': self.schedule_id,
-            'employee_id': self.employee.id,
-            'day_of_week': self.day_of_week,
-            'check_in_time': str(self.check_in_time) if self.check_in_time else None,
-            'check_out_time': str(self.check_out_time) if self.check_out_time else None,
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'location': self.location,
-            'location_id': self.location_id.id if self.location_id else None,
-            'is_active': self.is_active,
-            'is_deleted': self.is_deleted,
-            'created_date': self.created_date,
-            'created_by': self.created_by,
-            'updated_date': self.updated_date,
-            'updated_by': self.updated_by
+            'ScheduleID': self.ScheduleID,
+            'EmployeeID': self.EmployeeID,
+            'DayOfWeek': self.DayOfWeek,
+            'CheckInTime': self.CheckInTime.isoformat() if self.CheckInTime else None,
+            'CheckOutTime': self.CheckOutTime.isoformat() if self.CheckOutTime else None,
+            'Latitude': self.Latitude,
+            'Longitude': self.Longitude,
+            'Location': self.Location,
+            'LocationID': self.LocationID,
+            'IsLocationBasedAttendanceEnabled': self.IsLocationBasedAttendanceEnabled,
+            'IsActive': self.IsActive,
+            'IsDeleted': self.IsDeleted,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
+            'CreatedBy': self.CreatedBy,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
+            'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
 
+Employee.schedules = relationship("Schedule", order_by=Schedule.ScheduleID, back_populates="employee")
 
 class Vacation(Base):
     __tablename__ = 'Vacation'
 
     VacationID = Column(Integer, primary_key=True)
-    EmployeeID = Column(ForeignKey('Employee.EmployeeID'), index=True)
+    EmployeeID = Column(Integer)
     StartDate = Column(Date)
     EndDate = Column(Date)
-    EmployerID = Column(ForeignKey('Employer.EmployerID'), index=True)
-    Reason = Column(String(255, 'utf8mb4_general_ci'))
-    IsPaid = Column(BIT(1))
+    EmployerID = Column(Integer)
+    Reason = Column(String(255))
+    IsPaid = Column(Boolean)
     RequestedDate = Column(Date)
     ApprovalDate = Column(Date)
-    IsApproved = Column(BIT(1))
-    Location = Column(String(255, 'utf8mb4_general_ci'), nullable=False)
-    VacationTypeId = Column(ForeignKey('VacationType.VacationTypeID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsApproved = Column(Boolean)
+    Location = Column(String(255))
+    VacationTypeId = Column(Integer)
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
     UpdatedBy = Column(Integer)
-
-    Employee = relationship('Employee')
-    Employer = relationship('Employer')
-    VacationType = relationship('VacationType')
+    RowVersion = Column(Text)
 
     def to_dict(self):
         return {
-            'vacation_id': self.vacation_id,
-            'employee_id': self.employee.id if self.employee else None,
-            'start_date': str(self.start_date),
-            'end_date': str(self.end_date),
-            'employer_id': self.employer.id if self.employer else None,
-            'reason': self.reason,
-            'is_paid': self.is_paid,
-            'requested_date': str(self.requested_date),
-            'approval_date': str(self.approval_date) if self.approval_date else None,
-            'is_approved': self.is_approved,
-            'location': self.location,
-            'vacation_type_id': self.vacation_type.id,
-            'is_active': self.is_active,
-            'is_deleted': self.is_deleted,
-            'created_date': self.created_date,
-            'created_by': self.created_by,
-            'updated_date': self.updated_date,
-            'updated_by': self.updated_by
+            'VacationID': self.VacationID,
+            'EmployeeID': self.EmployeeID,
+            'StartDate': self.StartDate.isoformat() if self.StartDate else None,
+            'EndDate': self.EndDate.isoformat() if self.EndDate else None,
+            'EmployerID': self.EmployerID,
+            'Reason': self.Reason,
+            'IsPaid': self.IsPaid,
+            'RequestedDate': self.RequestedDate.isoformat() if self.RequestedDate else None,
+            'ApprovalDate': self.ApprovalDate.isoformat() if self.ApprovalDate else None,
+            'IsApproved': self.IsApproved,
+            'Location': self.Location,
+            'VacationTypeId': self.VacationTypeId,
+            'IsActive': self.IsActive,
+            'IsDeleted': self.IsDeleted,
+            'CreatedDate': self.CreatedDate.isoformat() if self.CreatedDate else None,
+            'CreatedBy': self.CreatedBy,
+            'UpdatedDate': self.UpdatedDate.isoformat() if self.UpdatedDate else None,
+            'UpdatedBy': self.UpdatedBy,
+            'RowVersion': self.RowVersion,
         }
 
 class Attendance(Base):
@@ -780,14 +763,14 @@ class Attendance(Base):
     Longitude = Column(Float)
     Location = Column(String(255, 'utf8mb4_general_ci'))
     CheckedImage = Column(LargeBinary)
-    IsCheckedout = Column(BIT(1))
-    IsLate = Column(BIT(1))
+    IsCheckedout = Column(Boolean)
+    IsLate = Column(Boolean)
     ScheduleID = Column(ForeignKey('Schedule.ScheduleID'), index=True)
     Reason = Column(String(255, 'utf8mb4_general_ci'))
-    IsExcused = Column(BIT(1))
+    IsExcused = Column(Boolean)
     LocationID = Column(ForeignKey('Location.LocationID'), index=True)
-    IsActive = Column(BIT(1))
-    IsDeleted = Column(BIT(1))
+    IsActive = Column(Boolean)
+    IsDeleted = Column(Boolean)
     CreatedDate = Column(DateTime)
     CreatedBy = Column(Integer)
     UpdatedDate = Column(DateTime)
