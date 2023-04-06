@@ -23,6 +23,31 @@ config = Config()
 # Initialize the 'config' attribute for the Blueprint
 services.ctx.config = config
 
+
+@services.listener('before_server_start')
+async def setup_db(app, loop):
+    app.ctx.db_pool =  create_pool(
+        server='192.67.63.238',
+        user='adminsameer',
+        password='m.sameer123',
+        database='db_attendancesystem',
+        minconn=1,
+        maxconn=10
+    )
+    
+    services.ctx.config['db'] = app.ctx.db_pool
+engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@192.67.63.238:1433/db_attendancesystem?driver=SQL+Server')
+employer_service = EmployerService(engine)
+
+Session = sessionmaker(bind=engine)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session = Session()
+
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+services.ctx.config['DB_SESSION'] = session
+
 # call this api to make sure api is running
 @services.get('/api/hello', strict_slashes=True)
 async def hello(request):
@@ -54,15 +79,17 @@ async def recognize(request):
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
     
-    
-    employee = EmployeeClass()
-    with services.ctx.config.db.acquire() as conn:
-        employeedata = employee.recognizeEmployee(conn, results[0][0])
-        if not employeedata:
-            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=200)
-        else:
-            json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-            return response.text(json_data, content_type='application/json')
+    try:
+        employee = EmployeeClass()
+        with services.ctx.config.db.acquire() as conn:
+            employeedata = employee.recognizeEmployee(conn, results[0][0])
+            if not employeedata:
+                return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=200)
+            else:
+                json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+                return response.text(json_data, content_type='application/json')
+    except Exception as e:
+        return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
         
     #return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
 
@@ -100,29 +127,6 @@ async def recognize(request):
 #         minconn=1,
 #         maxconn=10
 #     )
-@services.listener('before_server_start')
-async def setup_db(app, loop):
-    app.ctx.db_pool =  create_pool(
-        server='192.67.63.238',
-        user='adminsameer',
-        password='m.sameer123',
-        database='db_attendancesystem',
-        minconn=1,
-        maxconn=10
-    )
-    
-    services.ctx.config['db'] = app.ctx.db_pool
-engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@192.67.63.238:1433/db_attendancesystem?driver=SQL+Server')
-employer_service = EmployerService(engine)
-
-Session = sessionmaker(bind=engine)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-session = Session()
-
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-services.ctx.config['DB_SESSION'] = session
 
 
 @services.get('/api/employers', strict_slashes=True)
