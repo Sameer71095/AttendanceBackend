@@ -234,7 +234,7 @@ class EmployeeClass:
     @staticmethod
     def update_employee_images_registered(conn, employee_id, is_images_registered):
         with conn.cursor() as cur:
-            query = """UPDATE Employee SET IsImagesRegistered = %s WHERE EmployeeID = %s"""
+            query = """UPDATE Employee SET IsImagesRegistered = %s WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND EmployeeID = %s"""
             cur.execute(query, (is_images_registered, employee_id))
             conn.commit()
         
