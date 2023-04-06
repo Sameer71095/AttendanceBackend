@@ -15,6 +15,8 @@ from handler.services import CustomJSONEncoder, EmployeeClass, EmployerClass, Pr
 from handler.models import  Department, Employee, Employer, Location, SalaryType, UserType, Attendance
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
+from train.train import train
+from pathlib import Path
 
 services = Blueprint('services')
 
@@ -80,7 +82,6 @@ async def recognize(request):
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
     
-    
     employee = EmployeeClass()
     with services.ctx.config.db.acquire() as conn:
         employeedata = employee.recognizeEmployee(conn, results[0][0])
@@ -95,6 +96,23 @@ async def recognize(request):
         
     #return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
 
+@services.post('/api/train', strict_slashes=True)
+async def trigger_training(request):
+    try:
+        # Set the model save path
+        model_path = Path(__file__).parent / '..' / 'model' / 'train_model.clf'
+        model_path = model_path.resolve()
+
+        # Set the training data directory
+        train_dir = Path(__file__).parent / '..' / 'train'
+
+        # Call the train function from train.py
+        train(train_dir, model_save_path=model_path, n_neighbors=2, verbose=True, update_existing_model=True)
+
+        # Return a success response
+        return response.json({'status': HTTPStatus.OK, 'message': 'Training completed successfully'})
+    except Exception as e:
+        return response.json({'status': HTTPStatus.INTERNAL_SERVER_ERROR, 'message': f'Error during training: {str(e)}'})
 
 
 # async def connect_db():
