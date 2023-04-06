@@ -53,7 +53,18 @@ async def recognize(request):
     # get file stream
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
-    return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
+    
+    
+    employee = EmployeeClass()
+    with services.ctx.config.db.acquire() as conn:
+        employeedata = employee.recognizeEmployee(conn, results[0][0])
+        if not employeedata:
+            return response.json({'isSuccess': False, 'errorMessage': 'Invalid credentials'}, status=200)
+        else:
+            json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+            return response.text(json_data, content_type='application/json')
+        
+    #return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
 
 
 
@@ -342,7 +353,8 @@ async def get_locations(request):
 async def save_images(request):
     # Get the foldername from the request
     foldername = request.form.get('foldername')
-    foldername = 'train\\train\\' + foldername
+    #foldername = 'train\\train\\' + foldername   # for windows
+    foldername = 'train/train/' + foldername     # for linux
 
     # Create the folder if it doesn't exist
     if not os.path.exists(foldername):

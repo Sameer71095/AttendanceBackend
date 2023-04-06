@@ -230,6 +230,24 @@ class EmployeeClass:
             result_dict = {key: value for key, value in zip(column_names, result)}
 
             return result_dict
+
+    @staticmethod
+    def recognizeEmployee(conn, employee_id):
+        with conn.cursor() as cur:
+            query = """SELECT E.EmployeeID, E.Name, E.Email
+                   FROM Employee AS E
+                   WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s 
+                   """
+            cur.execute(query, (employee_id))
+            result = cur.fetchone()
+            if not result:
+                return None
+
+            # Convert the result to a dictionary
+            column_names = [desc[0] for desc in cur.description]
+            result_dict = {key: value for key, value in zip(column_names, result)}
+
+            return result_dict
     # Add this function to update the IsImagesRegistered field
     @staticmethod
     def update_employee_images_registered(conn, employee_id, is_images_registered):
