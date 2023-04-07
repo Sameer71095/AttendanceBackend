@@ -18,6 +18,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound
 from train.train import train
 from pathlib import Path
 
+
 services = Blueprint('services')
 
 config = Config()
@@ -29,7 +30,7 @@ services.ctx.config = config
 @services.listener('before_server_start')
 async def setup_db(app, loop):
     app.ctx.db_pool =  create_pool(
-        server='192.67.63.238',
+        server='127.0.0.1',
         user='adminsameer',
         password='m.sameer123',
         database='db_attendancesystem',
@@ -38,7 +39,7 @@ async def setup_db(app, loop):
     )
     
     services.ctx.config['db'] = app.ctx.db_pool
-engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@192.67.63.238:1433/db_attendancesystem?driver=SQL+Server')
+engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@127.0.0.1:1433/db_attendancesystem?driver=SQL+Server')
 employer_service = EmployerService(engine)
 
 Session = sessionmaker(bind=engine)
