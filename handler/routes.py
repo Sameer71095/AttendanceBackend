@@ -60,7 +60,7 @@ async def hello(request):
 
 
 # api that handle recognition image
-@services.post('/api/recognize', strict_slashes=True)
+@services.post('/api/attendance/recognize', strict_slashes=True)
 async def recognize(request):
  try:
     if 'image' not in request.files:
@@ -83,9 +83,11 @@ async def recognize(request):
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
     
+    latitude = request.form.get('latitude')
+    longitude = request.form.get('longitude')
     employee = EmployeeClass()
     with services.ctx.config.db.acquire() as conn:
-        employeedata = employee.recognizeEmployee(conn, results[0][0])
+        employeedata = employee.recognizeEmployee(conn, results[0][0],latitude,longitude)
         if not employeedata:
             return response.json({'isSuccess': False, 'errorMessage': 'Unable to fetch employee'}, status=200)
         else:

@@ -232,14 +232,28 @@ class EmployeeClass:
             return result_dict
 
     @staticmethod
-    def recognizeEmployee(conn, employee_id):
+    def recognizeEmployee(conn, employee_id, latitude, longitude):
         with conn.cursor() as cur:
-            query = """SELECT E.EmployeeID, E.Name, E.Email
-                   FROM Employee AS E
-                   WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s 
-                   """
-            cur.execute(query, (employee_id))
+            # Get the last attendance row and insert a new row with the updated IsCheckedOut status
+            combined_query = """
+                DECLARE @LastIsCheckedOut BIT;
+                
+                SELECT TOP 1 @LastIsCheckedOut = A.IsCheckedOut
+                FROM Attendance AS A
+                WHERE A.EmployeeID = %s
+                ORDER BY A.AttendanceID DESC;
+
+                INSERT INTO Attendance (EmployeeID, CheckedTime, CheckedDate, Latitude, Longitude, IsCheckedOut, IsActive, IsDeleted, CreatedDate, CreatedBy)
+                VALUES (%s, GETDATE(), CAST(GETDATE() AS DATE), %s, %s, IIF(@LastIsCheckedOut = 1, 0, 1), 1, 0, GETDATE(), %s);
+
+                SELECT E.EmployeeID, E.Name, E.Email, IIF(@LastIsCheckedOut = 1, 0, 1) AS IsCheckedOut
+                FROM Employee AS E
+                WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s;
+            """
+
+            cur.execute(combined_query, (employee_id, employee_id, latitude, longitude, employee_id, employee_id))
             result = cur.fetchone()
+
             if not result:
                 return None
 
@@ -247,7 +261,11 @@ class EmployeeClass:
             column_names = [desc[0] for desc in cur.description]
             result_dict = {key: value for key, value in zip(column_names, result)}
 
+            # Commit the transaction
+            conn.commit()
+
             return result_dict
+
     # Add this function to update the IsImagesRegistered field
     @staticmethod
     def update_employee_images_registered(conn, employee_id, is_images_registered):
