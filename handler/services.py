@@ -234,23 +234,23 @@ class EmployeeClass:
     @staticmethod
     def recognizeEmployee(conn, employee_id, latitude, longitude):
         with conn.cursor() as cur:
-            # Get the last attendance row and insert a new row with the updated IsCheckedOut status
+        # Get the last attendance row and insert a new row with the updated IsCheckedOut status
             combined_query = """
-                DECLARE @LastIsCheckedOut BIT;
-                
-                SELECT TOP 1 @LastIsCheckedOut = A.IsCheckedOut
-                FROM Attendance AS A
-                WHERE A.EmployeeID = %s
-                ORDER BY A.AttendanceID DESC;
+            DECLARE @LastIsCheckedOut BIT;
+            DECLARE @CurrentUAEDateTime DATETIMEOFFSET = SYSDATETIMEOFFSET() AT TIME ZONE 'UTC' AT TIME ZONE 'Arabian Standard Time';
+            
+            SELECT TOP 1 @LastIsCheckedOut = A.IsCheckedOut
+            FROM Attendance AS A
+            WHERE A.EmployeeID = %s
+            ORDER BY A.AttendanceID DESC;
 
-                INSERT INTO Attendance (EmployeeID, CheckedTime, CheckedDate, Latitude, Longitude, IsCheckedOut, IsActive, IsDeleted, CreatedDate, CreatedBy)
-                VALUES (%s, GETDATE(), CAST(GETDATE() AS DATE), %s, %s, IIF(@LastIsCheckedOut = 1, 0, 1), 1, 0, GETDATE(), %s);
+            INSERT INTO Attendance (EmployeeID, CheckedTime, CheckedDate, Latitude, Longitude, IsCheckedOut, IsActive, IsDeleted, CreatedDate, CreatedBy)
+            VALUES (%s, @CurrentUAEDateTime, CAST(@CurrentUAEDateTime AS DATE), %s, %s, IIF(@LastIsCheckedOut = 1, 0, 1), 1, 0, @CurrentUAEDateTime, %s);
 
-                SELECT E.EmployeeID, E.Name, E.Email, IIF(@LastIsCheckedOut = 1, 0, 1) AS IsCheckedOut
-                FROM Employee AS E
-                WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s;
-            """
-
+            SELECT E.EmployeeID, E.Name, E.Email, IIF(@LastIsCheckedOut = 1, 0, 1) AS IsCheckedOut
+            FROM Employee AS E
+            WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s;
+        """
             cur.execute(combined_query, (employee_id, employee_id, latitude, longitude, employee_id, employee_id))
             result = cur.fetchone()
 
