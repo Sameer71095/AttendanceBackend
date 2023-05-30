@@ -87,18 +87,31 @@ async def recognize(request):
     longitude = request.form.get('longitude')
     employee = EmployeeClass()
     with services.ctx.config.db.acquire() as conn:
-        employeedata = employee.recognizeEmployee(conn, results[0][0],latitude,longitude)
-        if not employeedata:
-            return response.json({'isSuccess': False, 'errorMessage': 'Unable to fetch employee'}, status=200)
-        else:
-            json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-            return response.text(json_data, content_type='application/json')
-        
+     try:
+        with conn.cursor() as cur:
+            employeedata = []
+            for result in results:
+                individual_data = EmployeeClass.recognizeEmployee(cur, result[0], latitude, longitude)
+                if individual_data:
+                    employeedata.append(individual_data)
+            # Commit the transaction after all operations are done
+            conn.commit()
+     except Exception as e:
+        print(f"Error: {e}")
+        conn.rollback()  # rollback the transaction in case of an error
+        return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
+
+    # If there was no error and all transactions are successful:
+    if not employeedata:
+        return response.json({'isSuccess': False, 'errorMessage': 'Unable to fetch employee'}, status=200)
+    else:
+        json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
+        return response.text(json_data, content_type='application/json')
+    
  except Exception as e:
         return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
-        
-    #return response.json({'status': HTTPStatus.OK, 'data': results[0][0]})
-
+            
+            
 @services.post('/api/train', strict_slashes=True)
 async def trigger_training(request):
     try:

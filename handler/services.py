@@ -26,7 +26,6 @@ class Prediction:
         aligned_face = dlib.get_face_chip(image, shape)
         return aligned_face
     
-    
     @staticmethod
     def show_prediction_labels_on_image(img_path, predictions, image_extension):
         pil_image = Image.open(io.BytesIO(img_path)).convert("RGB")
@@ -63,7 +62,7 @@ class Prediction:
         data_model = self.__model
         # Load image file and find face locations
         x_img = face_recognition.load_image_file(io.BytesIO(data))
-        x_face_locations = face_recognition.face_locations(x_img)
+        x_face_locations = face_recognition.face_locations(x_img, model="cnn")
 
         # If no faces are found in the image, return an empty result.
         if len(x_face_locations) == 0:
@@ -232,9 +231,8 @@ class EmployeeClass:
             return result_dict
 
     @staticmethod
-    def recognizeEmployee(conn, employee_id, latitude, longitude):
-        with conn.cursor() as cur:
-        # Get the last attendance row and insert a new row with the updated IsCheckedOut status
+    def recognizeEmployee(cur, employee_id, latitude, longitude):
+        try:
             combined_query = """
             DECLARE @LastIsCheckedOut BIT;
             DECLARE @CurrentUAEDateTime DATETIMEOFFSET = SYSDATETIMEOFFSET() AT TIME ZONE 'UTC' AT TIME ZONE 'Arabian Standard Time';
@@ -250,7 +248,7 @@ class EmployeeClass:
             SELECT E.EmployeeID, E.Name, E.Email, IIF(@LastIsCheckedOut = 1, 0, 1) AS IsCheckedOut
             FROM Employee AS E
             WHERE E.IsActive = 1 AND E.IsDeleted = 0 AND E.EmployeeID = %s;
-        """
+            """
             cur.execute(combined_query, (employee_id, employee_id, latitude, longitude, employee_id, employee_id))
             result = cur.fetchone()
 
@@ -261,11 +259,11 @@ class EmployeeClass:
             column_names = [desc[0] for desc in cur.description]
             result_dict = {key: value for key, value in zip(column_names, result)}
 
-            # Commit the transaction
-            conn.commit()
-
             return result_dict
+        except Exception as e:
+            raise e  # re-raise the exception to be caught outside
 
+    
     # Add this function to update the IsImagesRegistered field
     @staticmethod
     def update_employee_images_registered(conn, employee_id, is_images_registered):
