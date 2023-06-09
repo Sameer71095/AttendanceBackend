@@ -85,13 +85,15 @@ async def recognize(request):
     
     latitude = request.form.get('latitude')
     longitude = request.form.get('longitude')
+    employerid = request.form.get('employerid')  # It will be None if 'employerid' is not in the form data
     employee = EmployeeClass()
+
     with services.ctx.config.db.acquire() as conn:
      try:
         with conn.cursor() as cur:
             employeedata = []
             for result in results:
-                individual_data = EmployeeClass.recognizeEmployee(cur, result[0], latitude, longitude)
+                individual_data = EmployeeClass.recognizeEmployee(cur, result[0], latitude, longitude,employerid)
                 if individual_data:
                     employeedata.append(individual_data)
             # Commit the transaction after all operations are done

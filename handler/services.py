@@ -231,7 +231,7 @@ class EmployeeClass:
             return result_dict
 
     @staticmethod
-    def recognizeEmployee(cur, employee_id, latitude, longitude):
+    def recognizeEmployee(cur, employee_id, latitude, longitude, employerid=None):
         try:
             combined_query = """
             DECLARE @LastIsCheckedOut BIT;
