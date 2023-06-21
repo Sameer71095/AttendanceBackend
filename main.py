@@ -17,7 +17,7 @@ def load_pickle():
 train_model = load_pickle()
 
 app = Sanic(__name__)
-app.ctx.distance_threshold = 0.45
+app.ctx.distance_threshold = 0.43
 app.ctx._startup = True
 app.ctx.train_model = train_model
 app.blueprint(services)

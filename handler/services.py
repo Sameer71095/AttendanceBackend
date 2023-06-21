@@ -12,19 +12,30 @@ from sqlalchemy.orm import sessionmaker
 
 from datetime import date, datetime, timedelta
 from collections import namedtuple
+from mtcnn import MTCNN
+from typing import List, Tuple, Union
 
 
 class Prediction:
-    def __init__(self, train_model, distance_threshold):
+    def __init__(self, train_model, distance_threshold: float):
         self.__model = train_model
         self.__distance_threshold = distance_threshold
         self.__shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+        self.__detector = MTCNN()  # Initialize MTCNN detector once
 
-    def _align_face(self, image, face_location):
-        rect = dlib.rectangle(face_location[3], face_location[0], face_location[1], face_location[2])
-        shape = self.__shape_predictor(image, rect)
-        aligned_face = dlib.get_face_chip(image, shape)
-        return aligned_face
+    def _align_face(self, image: Union[np.ndarray, Image.Image], face_location: Tuple[int, int, int, int]) -> np.ndarray:
+        try:
+            if isinstance(image, Image.Image):
+                image = np.array(image)  # Convert PIL Image to numpy array
+
+            rect = dlib.rectangle(face_location[3], face_location[0], face_location[1], face_location[2])
+            shape = self.__shape_predictor(image, rect)
+            aligned_face = dlib.get_face_chip(image, shape)
+            return aligned_face
+        except Exception as e:
+            print(f"An error occurred in face alignment: {e}")
+            return np.array([])  # return an empty array in case of an error
+
     
     @staticmethod
     def show_prediction_labels_on_image(img_path, predictions, image_extension):
@@ -56,21 +67,25 @@ class Prediction:
         return f'data:image/{image_extension};base64,{img_str.decode()}'
 
 
-
     def predict_image(self, data: bytes, image_extension: str):
         # get data model from database
         data_model = self.__model
         # Load image file and find face locations
-        x_img = face_recognition.load_image_file(io.BytesIO(data))
-        x_face_locations = face_recognition.face_locations(x_img, model="cnn")
+        x_img = Image.open(io.BytesIO(data))
+        if isinstance(x_img, Image.Image):
+            x_img = np.array(x_img)  # Convert PIL Image to numpy array
+
+        x_face_locations = self.__detector.detect_faces(x_img)
 
         # If no faces are found in the image, return an empty result.
         if len(x_face_locations) == 0:
             return []
 
         # Align faces and find encodings for faces in the test image
-        aligned_faces = [self._align_face(x_img, face_location) for face_location in x_face_locations]
-        faces_encodings = [face_recognition.face_encodings(np.array(aligned_face))[0] for aligned_face in aligned_faces]
+        aligned_faces = [self._align_face(x_img, (face_location['box'][1], face_location['box'][0] + face_location['box'][2], 
+                                                 face_location['box'][1] + face_location['box'][3], face_location['box'][0])) 
+                         for face_location in x_face_locations]
+        faces_encodings = [face_recognition.face_encodings(aligned_face)[0] for aligned_face in aligned_faces if aligned_face.size > 0]
 
         # Use the KNN model to find the best matches for the test face
         closest_distances = data_model.kneighbors(faces_encodings, n_neighbors=5)
@@ -88,11 +103,17 @@ class Helper:
     @staticmethod
     def allowed_file(filename: str) -> bool:
         """Check if filename is allowed
-        :return:
+        :return: boolean value indicating whether the file extension is in the allowed extensions list
         """
-        # function to validate acceptable files
         ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        try:
+            return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        except IndexError:
+            print(f"An error occurred while parsing the file name: {filename}")
+            return False
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return False
     
 
 class CustomJSONEncoder(json.JSONEncoder):
