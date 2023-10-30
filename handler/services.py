@@ -16,11 +16,12 @@ from mtcnn import MTCNN
 from typing import List, Tuple, Union
 
 
+
 class Prediction:
-    def __init__(self, train_model, distance_threshold: float):
+    def __init__(self, train_model, distance_threshold: float, shape_predictor):
         self.__model = train_model
         self.__distance_threshold = distance_threshold
-        self.__shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+        self.__shape_predictor = shape_predictor  # Use the shape_predictor loaded in memory
         self.__detector = MTCNN()  # Initialize MTCNN detector once
 
     def _align_face(self, image: Union[np.ndarray, Image.Image], face_location: Tuple[int, int, int, int]) -> np.ndarray:

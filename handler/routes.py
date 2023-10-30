@@ -30,16 +30,16 @@ services.ctx.config = config
 @services.listener('before_server_start')
 async def setup_db(app, loop):
     app.ctx.db_pool =  create_pool(
-        server='127.0.0.1',
-        user='adminsameer',
-        password='m.sameer123',
+        server='mssql-rds.cedbukhwvk1i.ap-south-1.rds.amazonaws.com',
+        user='admin',
+        password='gt8ScwFgefV8oAmqdiLS',
         database='db_attendancesystem',
         minconn=1,
-        maxconn=10
+        maxconn=100
     )
     
     services.ctx.config['db'] = app.ctx.db_pool
-engine = create_engine('mssql+pyodbc://adminsameer:m.sameer123@127.0.0.1:1433/db_attendancesystem?driver=SQL+Server')
+engine = create_engine('mssql+pyodbc://admin:gt8ScwFgefV8oAmqdiLS@mssql-rds.cedbukhwvk1i.ap-south-1.rds.amazonaws.com:1433/db_attendancesystem?driver=SQL+Server')
 employer_service = EmployerService(engine)
 
 Session = sessionmaker(bind=engine)
@@ -55,8 +55,6 @@ services.ctx.config['DB_SESSION'] = session
 @services.get('/api/hello', strict_slashes=True)
 async def hello(request):
     return response.json({'status': HTTPStatus.OK, 'message': 'Hello .. '})
-
-
 
 
 # api that handle recognition image
@@ -76,39 +74,16 @@ async def recognize(request):
     knn_model, _, _ = request.app.ctx.train_model
 
     distance_threshold = request.app.ctx.distance_threshold
-    prediction = Prediction(knn_model, distance_threshold)
+    shape_predictor = request.app.ctx.shape_predictor  # Get the shape_predictor from application context
+    prediction = Prediction(knn_model, distance_threshold, shape_predictor)
     # get file extension
     image_extension = file.name.split('.')[1]
     # get file stream
     file_stream = file.body
     results = prediction.predict_image(file_stream, image_extension)
-    
-    latitude = request.form.get('latitude')
-    longitude = request.form.get('longitude')
-    employerid = request.form.get('employerid')  # It will be None if 'employerid' is not in the form data
-    employee = EmployeeClass()
 
-    with services.ctx.config.db.acquire() as conn:
-     try:
-        with conn.cursor() as cur:
-            employeedata = []
-            for result in results:
-                individual_data = EmployeeClass.recognizeEmployee(cur, result[0], latitude, longitude,employerid)
-                if individual_data:
-                    employeedata.append(individual_data)
-            # Commit the transaction after all operations are done
-            conn.commit()
-     except Exception as e:
-        print(f"Error: {e}")
-        conn.rollback()  # rollback the transaction in case of an error
-        return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
-
-    # If there was no error and all transactions are successful:
-    if not employeedata:
-        return response.json({'isSuccess': False, 'errorMessage': 'Unable to fetch employee'}, status=200)
-    else:
-        json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': employeedata}, cls=CustomJSONEncoder)
-        return response.text(json_data, content_type='application/json')
+    json_data = json.dumps({'isSuccess': True, 'errorMessage': '', 'data': results}, cls=CustomJSONEncoder)
+    return response.text(json_data, content_type='application/json')
     
  except Exception as e:
         return response.json({'isSuccess': False, 'errorMessage': str(e), 'data': None}, status=200)
@@ -228,7 +203,8 @@ async def attendance_checkin(request):
     knn_model, _, _ = request.app.ctx.train_model
 
     distance_threshold = request.app.ctx.distance_threshold
-    prediction = Prediction(knn_model, distance_threshold)
+    shape_predictor = request.app.ctx.shape_predictor  # Get the shape_predictor from application context
+    prediction = Prediction(knn_model, distance_threshold, shape_predictor)
     # get file extension
     image_extension = file.name.split('.')[1]
     # get file stream
